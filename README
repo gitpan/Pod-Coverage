@@ -46,8 +46,8 @@ DESCRIPTION
         "package" the name of the package to analyse
 
         "private" an array of regexen which define what symbols are regarded
-        as private (and so need not be documented) defaults to /^_/ and
-        /^import$/
+        as private (and so need not be documented) defaults to /^_/,
+        /^import$/, /^DESTROY/, and /^AUTOLOAD/.
 
         "also_private" is similar to "private" but these are appended to the
         default set
@@ -77,6 +77,13 @@ TODO
         Pod::Coverage declares them to have none.
 
 HISTORY
+    Version 0.04
+        Just 0.03 with a correctly generated README file
+
+    Version 0.03
+        Applied a patch from Dave Rolsky (barely 6 hours after release of
+        0.02) to improve scanning of pod markers.
+
     Version 0.02
         Fixed up the import form. Removed dependency on List::Util. Added
         naked method. Exposed private configuration.

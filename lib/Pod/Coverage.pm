@@ -4,7 +4,7 @@ use Devel::Symdump;
 use Devel::Peek qw(CvGV);
 
 use vars qw/ $VERSION /;
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 =head1 NAME
 
@@ -222,6 +222,10 @@ have none.
 =head1 HISTORY
 
 =over
+
+=item Version 0.04
+
+Just 0.03 with a correctly generated README file
 
 =item Version 0.03
 
