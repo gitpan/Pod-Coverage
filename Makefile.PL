@@ -16,6 +16,7 @@ WriteMakefile(
                              'Devel::Symdump' => 2.01,
                              'Devel::Peek'    => 0,
                              'Pod::Parser'    => 1.13,
+			     'Pod::Find'      => 0.21,
                            },
               $] >= 5.005 ? ('AUTHOR'   => 'Richard Clamp <richardc@unixbeard.net>, Michael Stevens <michael@etla.org.>',
                              'ABSTRACT' => 'Checks if the documentation of a module is comprehensive',

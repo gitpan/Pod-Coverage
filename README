@@ -55,28 +55,35 @@ DESCRIPTION
     $object->coverage
         Gives the coverage as a value in the range 0 to 1
 
-    $object->naked
+    $object->naked/$object->uncovered
         Returns a list of uncovered routines, will implicitly call coverage
         if it's not already been called.
+
+        Note, private identifiers will be skipped.
+
+    $object->covered
+        Returns a list of covered routines, will implicitly call coverage if
+        it's not previously been called.
+
+        As with "naked" private identifiers will be skipped.
 
 BUGS
     Due to the method used to identify documented subroutines
     "Pod::Coverage" may completely miss your house style and declare your
     code undocumented. Patches and/or failing tests welcome.
 
-    Also the code currently only deals with packages in their own .pm files,
-    this will be adressed with the next release.
-
 TODO
-    Examine globals and explicitly exported symbols
+    Examine exportable symbols
     Determine if ancestor packages declare things left undocumented
     Widen the rules for identifying documentation
-    Look for a correponding .pod file to go with your .pm file
-        This is typical of code like Data::Dumper and
-        Quantum::Superpositions, which have extensive documentation, but
-        Pod::Coverage declares them to have none.
-
 HISTORY
+    Version 0.05
+        Used Pod::Find to deal with alternative locations for pod files.
+        Introduced pod_from. Merged some patches from Schwern. Added in
+        clothed. Assimilated "examples/check_installed" as contributed by
+        Kirrily "Skud" Robert <skud@cpan.org>. Copes with multple functions
+        documented by one section. Added uncovered as a synonym for naked.
+
     Version 0.04
         Just 0.03 with a correctly generated README file
 

@@ -2,9 +2,10 @@ package Pod::Coverage;
 use strict;
 use Devel::Symdump;
 use Devel::Peek qw(CvGV);
+use Pod::Find qw(pod_where);
 
 use vars qw/ $VERSION /;
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 =head1 NAME
 
@@ -77,7 +78,12 @@ sub new {
     my %args = @_;
     my $class = ref $referent || $referent;
 
-    my $private = $args{private} || [ qr/^_/, qr/^import$/, qr/^DESTROY/, qr/^AUTOLOAD/, @{ $args{also_private} || [] } ];
+    my $private = $args{private} || [ qr/^_/, 
+				      qr/^import$/, 
+				      qr/^DESTROY$/, 
+				      qr/^AUTOLOAD$/, 
+				      qr/^bootstrap$/, 
+				      @{ $args{also_private} || [] } ];
     my $self = bless { @_, private => $private }, $class;
 }
 
@@ -91,20 +97,24 @@ Gives the coverage as a value in the range 0 to 1
 sub coverage {
     my $self = shift;
 
-    my $package = $self->{package};
-    eval qq{ require $package; };
+    my $debug = $self->{debug};
+    my $package = $self->{package}; 
+
+    print "getting pod location for '$package'\n" if $debug;
+    $self->{pod_from} ||= pod_where({ -inc => 1 }, $package);
+    my $pod_from = $self->{pod_from};
+    return unless $pod_from;
+
+    print "parsing '$pod_from'\n" if $debug;
+    my $pod = new Pod::Coverage::Extractor::;
+    $pod->parse_from_file($pod_from, '/dev/null');
+
+    print "requiring '$package'\n" if $debug;
+    eval qq{ require $package }; 
     return if $@;
 
+    print "walking symbols\n" if $debug;
     my $syms = new Devel::Symdump $package;
-    my $file = $package;
-    $file =~ s!::!/!g;
-    if ($INC{"$file.pm"}) {
-        $file = $INC{"$file.pm"};
-    }
-    return unless $file;
-
-    my $pod = new Pod::Coverage::Extractor::;
-    $pod->parse_from_file($file, '/dev/null');
 
     my %symbols;
     for my $sym ($syms->functions) {
@@ -120,14 +130,8 @@ sub coverage {
         $symbols{$sym} = 0;
     }
 
+    print "tying shoelaces\n" if $debug;
     for my $pod (@{ $pod->{identifiers} }) {
-        # it's dressed up like a method call
-        $pod =~ /->(.*)/   and $pod = $1;
-        # it's wrapped in a pod style B<>
-        $pod =~ /<(.*)>/   and $pod = $1;
-        # it's got example arguments
-        $pod =~ /(\S+)\s*\(/   and $pod = $1;
-
         $symbols{$pod} = 1 if exists $symbols{$pod};
     }
 
@@ -140,10 +144,12 @@ sub coverage {
     return $documented / $symbols;
 }
 
-=item $object->naked
+=item $object->naked/$object->uncovered
 
 Returns a list of uncovered routines, will implicitly call coverage if
 it's not already been called.
+
+Note, private identifiers will be skipped.
 
 =cut
 
@@ -154,9 +160,29 @@ sub naked {
     return grep { !$self->{symbols}{$_} } keys %{ $self->{symbols} };
 }
 
+*uncovered = \&naked;
+
+=item $object->covered
+
+Returns a list of covered routines, will implicitly call coverage if
+it's not previously been called.
+
+As with C<naked> private identifiers will be skipped.
+
+=cut
+
+sub covered {
+    my $self = shift;
+    $self->{symbols} or $self->coverage;
+    return unless $self->{symbols};
+    return grep { $self->{symbols}{$_} } keys %{ $self->{symbols} };
+}
+
+
 sub import {
     my $self = shift;
     return unless @_;
+
     # we were called with arguments
     my $pc = new Pod::Coverage @_;
     print $pc->{package}, " has a Pod::Coverage rating of ", $pc->coverage,"\n";
@@ -167,7 +193,6 @@ sub import {
     elsif (@looky_here) {
         print "'$looky_here[0]' is uncovered\n";
     }
-
 }
 
 package Pod::Coverage::Extractor;
@@ -180,9 +205,19 @@ sub command {
     my $self = shift;
     my ($command, $text, $line_num) = @_;
     if ($command eq 'item' || $command =~ /^head(?:2|3|4)/) {
-        # lose trailing newlines, and take note
-        return unless $text =~ /(.*)/;
-        push @{$self->{identifiers}}, $1;
+        # take a closer look
+	my @pods = ($text =~ /\s*([^\s\|,\/]+)/g);
+
+	foreach my $pod (@pods) {
+	    # it's dressed up like a method call
+	    $pod =~ /->(.*)/   and $pod = $1;
+	    # it's wrapped in a pod style B<>
+	    $pod =~ /<(.*)>/   and $pod = $1;
+	    # it's got example arguments
+	    $pod =~ /(\S+)\s*\(/   and $pod = $1;
+
+	    push @{$self->{identifiers}}, $pod;
+	}
     }
 }
 
@@ -198,30 +233,29 @@ Due to the method used to identify documented subroutines
 C<Pod::Coverage> may completely miss your house style and declare your
 code undocumented.  Patches and/or failing tests welcome.
 
-Also the code currently only deals with packages in their own .pm
-files, this will be adressed with the next release.
-
 =head1 TODO
 
 =over
 
-=item Examine globals and explicitly exported symbols
+=item Examine exportable symbols
 
 =item Determine if ancestor packages declare things left undocumented
 
 =item Widen the rules for identifying documentation
-
-=item Look for a correponding .pod file to go with your .pm file
-
-This is typical of code like Data::Dumper and Quantum::Superpositions,
-which have extensive documentation, but Pod::Coverage declares them to
-have none.
 
 =back
 
 =head1 HISTORY
 
 =over
+
+=item Version 0.05
+
+Used Pod::Find to deal with alternative locations for pod files.
+Introduced pod_from.  Merged some patches from Schwern.  Added in
+clothed.  Assimilated C<examples/check_installed> as contributed by
+Kirrily "Skud" Robert <skud@cpan.org>.  Copes with multple functions
+documented by one section.  Added uncovered as a synonym for naked.
 
 =item Version 0.04
 

@@ -1,0 +1,14 @@
+MANIFEST
+README
+Makefile.PL
+lib/Pod/Coverage.pm
+t/01compile.t
+t/02simple.t
+t/03import.t
+t/lib/Simple1.pm
+t/lib/Simple2.pm
+t/lib/Simple3.pm
+t/lib/Simple4.pm
+t/lib/Simple4.pod
+t/lib/Simple5.pm
+examples/check_installed
