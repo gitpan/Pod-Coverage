@@ -1,4 +1,4 @@
-README for Pod::Coverage 0.16
+README for Pod::Coverage 0.17
 
 =head1 NAME
 
@@ -42,6 +42,13 @@ What changed over the last 3 revisions
 
 =over
 
+=item 0.17	Tuesday 23rd November, 2004
+
+	Fixed a further case reported by Jos Boumans where
+    	=head2 $self->foo(); was intepreted as documentation for a
+        C<foo()> method.  (more XS4ALL house style)
+
+
 =item 0.16	Wednesday 20th October, 2004
 
 	Fixed a MANIFEST bug.
@@ -53,12 +60,6 @@ What changed over the last 3 revisions
 =item 0.15	Tuesday 19th October, 2004
 
 	Correctly ignores tie subroutines (David Cantrell)
-
-
-=item 0.14	Sunday 9th May, 2004
-
-	Small fix from Andy Lester for when people entity escape
-	the greater than in the method call arrow.
 
 =back
 

@@ -10,7 +10,7 @@ use DynaLoader ();
 use base 'DynaLoader';
 
 use vars qw/ $VERSION /;
-$VERSION = '0.16';
+$VERSION = '0.17';
 
 =head1 NAME
 
@@ -376,7 +376,7 @@ sub command {
             $pod =~ s/[A-Z]<//g;
             $pod =~ s/>//g;
             # has arguments, or a semicolon
-            $pod =~ /(\S+)\s*[\(;]/   and $pod = $1;
+            $pod =~ /(\w+)\s*[;\(]/   and $pod = $1;
 
             print "Adding: '$pod'\n" if debug;
             push @{$self->{identifiers}}, $pod;
