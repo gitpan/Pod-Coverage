@@ -1,11 +1,14 @@
 MANIFEST
 README
 Makefile.PL
+Coverage.xs
 lib/Pod/Coverage.pm
 lib/Pod/Coverage/ExportOnly.pm
+lib/Pod/Coverage/Overloader.pm
 t/01compile.t
 t/02simple.t
 t/03import.t
+t/04cvgv.t
 t/lib/Simple1.pm
 t/lib/Simple2.pm
 t/lib/Simple3.pm

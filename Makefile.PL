@@ -4,21 +4,22 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
               'NAME'         => 'Pod::Coverage',
               'VERSION_FROM' => 'lib/Pod/Coverage.pm', # finds $VERSION
-              'dist' => {
-                         COMPRESS=>'gzip -9f',
-                         SUFFIX=>'gz',
-                         DIST_DEFAULT => 'tardist'
-                        },
-              'PM' => {
-                       'lib/Pod/Coverage.pm'            => '$(INST_LIBDIR)/Coverage.pm',
-                       'lib/Pod/Coverage/ExportOnly.pm' => '$(INST_LIBDIR)/Coverage/ExportOnly.pm',
-                      },
-              PREREQ_PM => { 'Test::More'     => 0.11,
-                             'Devel::Symdump' => 2.01,
-                             'Devel::Peek'    => 0,
-                             'Pod::Parser'    => 1.13,
-			     'Pod::Find'      => 0.21,
-                           },
+              'dist'         => {
+				 COMPRESS=>'gzip -9f',
+				 SUFFIX=>'gz',
+				 DIST_DEFAULT => 'tardist'
+				},
+	      PM             => {
+				 'lib/Pod/Coverage.pm'            => '$(INST_LIBDIR)/Coverage.pm',
+				 'lib/Pod/Coverage/ExportOnly.pm' => '$(INST_LIBDIR)/Coverage/ExportOnly.pm',
+				 'lib/Pod/Coverage/Overloader.pm' => '$(INST_LIBDIR)/Coverage/Overloader.pm',
+				},
+              PREREQ_PM      => { 
+				 'Test::More'     => 0.11,
+				 'Devel::Symdump' => 2.01,
+				 'Pod::Parser'    => 1.13,
+				 'Pod::Find'      => 0.21,
+				},
               $] >= 5.005 ? ('AUTHOR'   => 'Richard Clamp <richardc@unixbeard.net>, Michael Stevens <michael@etla.org.>',
                              'ABSTRACT' => 'Checks if the documentation of a module is comprehensive',
 

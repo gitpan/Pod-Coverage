@@ -79,7 +79,13 @@ DESCRIPTION
     NOTE Please consider this interface as in a state of flux until this
     comment goes away.
 
-    _get_syms($package)
+    $object->_CvGV($symbol)
+        Return the GV for the coderef supplied. Used by _get_syms to
+        identify locally defined code.
+
+        You probably won't need to override this one.
+
+    $object->_get_syms($package)
         return a list of symbols to check for from the specified packahe
 
     _private_check($symbol)
@@ -98,6 +104,18 @@ TODO
     Investigate making Pod::Coverage produce suitable data for use by
     Devel::Cover
 HISTORY
+    Version 0.07
+        Implemented _CvGV based upon code from Robin Houston. This removes
+        the dependency on Devel::Peek (the CPAN version of Devel::Peek
+        doesn't supply CvGV). This also happily makes the module work on
+        with perl 5.005_03.
+
+        Fixed a bug in the import routine which was preventing the use form
+        of derived classes. Reports a module is unrated if coverage returns
+        undef.
+
+        Added Pod::Checker::Overloader.
+
     Version 0.06
         First cut at making inheritance easy. Pod::Checker::ExportOnly isa
         Pod::Checker which only checks what Exporter is allowed to hand out.

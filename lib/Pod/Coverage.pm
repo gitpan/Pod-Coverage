@@ -1,11 +1,13 @@
 package Pod::Coverage;
 use strict;
 use Devel::Symdump;
-use Devel::Peek qw(CvGV);
 use Pod::Find qw(pod_where);
 
+use DynaLoader ();
+use base 'DynaLoader';
+
 use vars qw/ $VERSION /;
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 =head1 NAME
 
@@ -168,8 +170,10 @@ sub import {
     return unless @_;
 
     # we were called with arguments
-    my $pc = new Pod::Coverage @_;
-    print $pc->{package}, " has a Pod::Coverage rating of ", $pc->coverage,"\n";
+    my $pc = $self->new(@_);
+    my $rating = $pc->coverage;
+    $rating = 'unrated' unless defined $rating;
+    print $pc->{package}, " has a $self rating of $rating\n";
     my @looky_here = $pc->naked;
     if (@looky_here > 1) {
         print "The following are uncovered: ", join(", ", @looky_here), "\n";
@@ -192,7 +196,14 @@ this comment goes away.
 
 =over
 
-=item _get_syms($package)
+=item $object->_CvGV($symbol)
+
+Return the GV for the coderef supplied.  Used by _get_syms to identify
+locally defined code.
+
+You probably won't need to override this one.
+
+=item $object->_get_syms($package)
 
 return a list of symbols to check for from the specified packahe
 
@@ -215,7 +226,7 @@ sub _get_syms {
     my @symbols;
     for my $sym ($syms->functions) {
         # see if said method wasn't just imported from elsewhere
-        my $owner = CvGV(\&{ $sym });
+        my $owner = $self->_CvGV(\&{ $sym });
         $owner =~ s/^\*(.*)::.*?$/$1/;
         next if $owner ne $self->{package};
 
@@ -240,6 +251,7 @@ sub _private_check {
     return grep { $sym =~ /$_/ } @{ $self->{private} };
 }
 
+bootstrap Pod::Coverage;
 
 package Pod::Coverage::Extractor;
 use Pod::Parser;
@@ -297,6 +309,19 @@ code undocumented.  Patches and/or failing tests welcome.
 =head1 HISTORY
 
 =over
+
+=item Version 0.07
+
+Implemented _CvGV based upon code from Robin Houston.  This removes
+the dependency on Devel::Peek (the CPAN version of Devel::Peek doesn't
+supply CvGV).  This also happily makes the module work on with perl
+5.005_03.
+
+Fixed a bug in the import routine which was preventing the use form of
+derived classes.  Reports a module is unrated if coverage returns
+undef.
+
+Added Pod::Checker::Overloader.
 
 =item Version 0.06
 
