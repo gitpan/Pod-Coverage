@@ -1,5 +1,8 @@
-package Pod::Coverage;
 use strict;
+
+package Pod::Coverage::Extractor; # placeholder, we'll come back to this later
+
+package Pod::Coverage;
 use Devel::Symdump;
 use Pod::Find qw(pod_where);
 
@@ -7,7 +10,7 @@ use DynaLoader ();
 use base 'DynaLoader';
 
 use vars qw/ $VERSION /;
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 =head1 NAME
 
@@ -68,10 +71,9 @@ C<package> the name of the package to analyse
 
 C<private> an array of regexen which define what symbols are regarded
 as private (and so need not be documented) defaults to /^_/,
-/^import$/, /^DESTROY/, and /^AUTOLOAD/.
+/^import$/, /^DESTROY/, /^AUTOLOAD/, /^bootstrap$/.
 
-C<also_private> is similar to C<private> but these are appended to the
-default set
+C<also_private> items are appended to the private list
 
 If C<pod_from> is supplied, that file is parsed for the documentation,
 rather than using Pod::Find
@@ -80,15 +82,15 @@ rather than using Pod::Find
 
 sub new {
     my $referent = shift;
-    my %args = @_;
-    my $class = ref $referent || $referent;
+    my %args     = @_;
+    my $class    = ref $referent || $referent;
 
-    my $private = $args{private} || [ qr/^_/, 
-				      qr/^import$/, 
-				      qr/^DESTROY$/, 
-				      qr/^AUTOLOAD$/, 
-				      qr/^bootstrap$/, 
-				      @{ $args{also_private} || [] } ];
+    my $private = $args{private} || [ qr/^_/,
+                                      qr/^import$/,
+                                      qr/^DESTROY$/,
+                                      qr/^AUTOLOAD$/,
+                                      qr/^bootstrap$/ ];
+    push @$private, @{ $args{also_private} || [] };
     my $self = bless { @_, private => $private }, $class;
 }
 
@@ -102,22 +104,22 @@ Gives the coverage as a value in the range 0 to 1
 sub coverage {
     my $self = shift;
 
-    my $debug = $self->{debug};
-    my $package = $self->{package}; 
+    my $debug   = $self->{debug};
+    my $package = $self->{package};
 
     print "getting pod location for '$package'\n" if $debug;
-    $self->{pod_from} ||= pod_where({ -inc => 1 }, $package);
+    $self->{pod_from} ||= pod_where( { -inc => 1 }, $package );
     my $pod_from = $self->{pod_from};
     return unless $pod_from;
 
     print "parsing '$pod_from'\n" if $debug;
-    my $pod = new Pod::Coverage::Extractor::;
-    $pod->parse_from_file($pod_from, '/dev/null');
+    my $pod = new Pod::Coverage::Extractor;
+    $pod->parse_from_file( $pod_from, '/dev/null' );
 
     my %symbols = map { $_ => 0 } $self->_get_syms($package);
 
     print "tying shoelaces\n" if $debug;
-    for my $pod (@{ $pod->{identifiers} }) {
+    for my $pod ( @{ $pod->{identifiers} } ) {
         $symbols{$pod} = 1 if exists $symbols{$pod};
     }
 
@@ -170,12 +172,12 @@ sub import {
     return unless @_;
 
     # we were called with arguments
-    my $pc = $self->new(@_);
+    my $pc     = $self->new(@_);
     my $rating = $pc->coverage;
     $rating = 'unrated' unless defined $rating;
     print $pc->{package}, " has a $self rating of $rating\n";
     my @looky_here = $pc->naked;
-    if (@looky_here > 1) {
+    if ( @looky_here > 1 ) {
         print "The following are uncovered: ", join(", ", @looky_here), "\n";
     }
     elsif (@looky_here) {
@@ -211,22 +213,22 @@ return a list of symbols to check for from the specified packahe
 
 # this one walks the symbol tree
 sub _get_syms {
-    my $self = shift;
+    my $self    = shift;
     my $package = shift;
 
     my $debug = $self->{debug};
 
     print "requiring '$package'\n" if $debug;
-    eval qq{ require $package }; 
+    eval qq{ require $package };
     return if $@;
 
     print "walking symbols\n" if $debug;
     my $syms = new Devel::Symdump $package;
 
     my @symbols;
-    for my $sym ($syms->functions) {
+    for my $sym ( $syms->functions ) {
         # see if said method wasn't just imported from elsewhere
-        my $owner = $self->_CvGV(\&{ $sym });
+        my $owner = $self->_CvGV( \&{ $sym } );
         $owner =~ s/^\*(.*)::.*?$/$1/;
         next if $owner ne $self->{package};
 
@@ -253,10 +255,10 @@ sub _private_check {
 
 bootstrap Pod::Coverage;
 
+
 package Pod::Coverage::Extractor;
 use Pod::Parser;
-use vars qw/ @ISA /;
-@ISA = 'Pod::Parser';
+use base 'Pod::Parser';
 
 # extract subnames from a pod stream
 sub command {
@@ -264,18 +266,18 @@ sub command {
     my ($command, $text, $line_num) = @_;
     if ($command eq 'item' || $command =~ /^head(?:2|3|4)/) {
         # take a closer look
-	my @pods = ($text =~ /\s*([^\s\|,\/]+)/g);
+        my @pods = ($text =~ /\s*([^\s\|,\/]+)/g);
 
-	foreach my $pod (@pods) {
-	    # it's dressed up like a method call
-	    $pod =~ /->(.*)/   and $pod = $1;
-	    # it's wrapped in a pod style B<>
-	    $pod =~ /<(.*)>/   and $pod = $1;
-	    # it's got example arguments
-	    $pod =~ /(\S+)\s*\(/   and $pod = $1;
+        foreach my $pod (@pods) {
+            # it's dressed up like a method call
+            $pod =~ /->(.*)/   and $pod = $1;
+            # it's wrapped in a pod style B<>
+            $pod =~ /<(.*)>/   and $pod = $1;
+            # it's got example arguments
+            $pod =~ /(\S+)\s*\(/   and $pod = $1;
 
-	    push @{$self->{identifiers}}, $pod;
-	}
+            push @{$self->{identifiers}}, $pod;
+        }
     }
 }
 
@@ -302,13 +304,23 @@ code undocumented.  Patches and/or failing tests welcome.
 
 =item Improve the code coverage of the test suite.  C<Devel::Cover> rocks so hard.
 
-=item Investigate making Pod::Coverage produce suitable data for use by Devel::Cover
-
 =back
 
 =head1 HISTORY
 
 =over
+
+=item Version 0.08 2001-11-14
+
+Paul Johnson beat me to making Pod::Coverage a Devel::Cover plugin, so
+that's one less thing in the TODO section.
+
+Ran the code through perltidy, made some of the changes it suggested.
+
+Worked over the parsing of the also_private flag to give it more
+consistent semantics
+
+Assimilated examples/pod_cover.t from Tels
 
 =item Version 0.07
 

@@ -1,9 +1,10 @@
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
+my $module = 'lib/Pod/Coverage.pm';
 WriteMakefile(
               'NAME'         => 'Pod::Coverage',
-              'VERSION_FROM' => 'lib/Pod/Coverage.pm', # finds $VERSION
+              'VERSION_FROM' => $module, # finds $VERSION
               'dist'         => {
 				 COMPRESS=>'gzip -9f',
 				 SUFFIX=>'gz',
@@ -26,3 +27,14 @@ WriteMakefile(
                             ) : ()
 
              );
+
+use Config;
+use File::Spec::Functions;
+sub MY::postamble {
+    my $perl     = $Config{perlpath};
+    my $pod2text = catfile($Config{bin}, "pod2text");
+    return <<EOF
+README: $module
+\t$perl $pod2text $module > README
+EOF
+}

@@ -47,10 +47,9 @@ DESCRIPTION
 
         "private" an array of regexen which define what symbols are regarded
         as private (and so need not be documented) defaults to /^_/,
-        /^import$/, /^DESTROY/, and /^AUTOLOAD/.
+        /^import$/, /^DESTROY/, /^AUTOLOAD/, /^bootstrap$/.
 
-        "also_private" is similar to "private" but these are appended to the
-        default set
+        "also_private" items are appended to the private list
 
         If "pod_from" is supplied, that file is parsed for the
         documentation, rather than using Pod::Find
@@ -101,9 +100,19 @@ TODO
     Widen the rules for identifying documentation
     Improve the code coverage of the test suite. "Devel::Cover" rocks so
     hard.
-    Investigate making Pod::Coverage produce suitable data for use by
-    Devel::Cover
 HISTORY
+    Version 0.08 2001-11-14
+        Paul Johnson beat me to making Pod::Coverage a Devel::Cover plugin,
+        so that's one less thing in the TODO section.
+
+        Ran the code through perltidy, made some of the changes it
+        suggested.
+
+        Worked over the parsing of the also_private flag to give it more
+        consistent semantics
+
+        Assimilated examples/pod_cover.t from Tels
+
     Version 0.07
         Implemented _CvGV based upon code from Robin Houston. This removes
         the dependency on Devel::Peek (the CPAN version of Devel::Peek
