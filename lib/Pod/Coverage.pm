@@ -12,7 +12,7 @@ use DynaLoader ();
 use base 'DynaLoader';
 
 use vars qw/ $VERSION /;
-$VERSION = '0.09';
+$VERSION = '0.10';
 
 =head1 NAME
 
@@ -110,23 +110,13 @@ sub coverage {
     my $self = shift;
 
     my $package = $self->{package};
-
-    print "getting pod location for '$package'\n" if TRACE_ALL;
-    $self->{pod_from} ||= pod_where( { -inc => 1 }, $package );
-    my $pod_from = $self->{pod_from};
-    unless ($pod_from) {
-        $self->{why_unrated} = "couldn't find pod";
-        return;
-    }
-
-    print "parsing '$pod_from'\n" if TRACE_ALL;
-    my $pod = new Pod::Coverage::Extractor;
-    $pod->parse_from_file( $pod_from, '/dev/null' );
+    my $pods = $self->_get_pods;
+    return unless $pods;
 
     my %symbols = map { $_ => 0 } $self->_get_syms($package);
 
     print "tying shoelaces\n" if TRACE_ALL;
-    for my $pod ( @{ $pod->{identifiers} } ) {
+    for my $pod ( @$pods ) {
         $symbols{$pod} = 1 if exists $symbols{$pod};
     }
 
@@ -293,6 +283,36 @@ sub _get_syms {
     return @symbols;
 }
 
+=item _get_pods
+
+Extract pod markers from the currently active package.
+
+Return an arrayref or undef on fail.
+
+=cut
+
+sub _get_pods {
+    my $self = shift;
+
+    my $package = $self->{package};
+
+    print "getting pod location for '$package'\n" if TRACE_ALL;
+    $self->{pod_from} ||= pod_where( { -inc => 1 }, $package );
+
+    my $pod_from = $self->{pod_from};
+    unless ($pod_from) {
+        $self->{why_unrated} = "couldn't find pod";
+        return;
+    }
+
+    print "parsing '$pod_from'\n" if TRACE_ALL;
+    my $pod = new Pod::Coverage::Extractor;
+    $pod->parse_from_file( $pod_from, '/dev/null' );
+
+    return $pod->{identifiers} || [];
+}
+
+
 =item _private_check($symbol)
 
 return true if the symbol should be considered private
@@ -350,8 +370,6 @@ code undocumented.  Patches and/or failing tests welcome.
 
 =over
 
-=item Determine if ancestor packages declare things left undocumented
-
 =item Widen the rules for identifying documentation
 
 =item Improve the code coverage of the test suite.  C<Devel::Cover> rocks so hard.
@@ -361,6 +379,13 @@ code undocumented.  Patches and/or failing tests welcome.
 =head1 HISTORY
 
 =over
+
+=item Version 0.10 2002-02-18
+
+Added Pod::Coverage::CountParents which counts the Pod sections from
+higher in the inheritance tree (it walks @ISA).
+
+Refactored C<_get_pods> into its own method to allow this.
 
 =item Version 0.09 2001-12-17
 

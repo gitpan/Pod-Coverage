@@ -109,6 +109,11 @@ DESCRIPTION
     $object->_get_syms($package)
         return a list of symbols to check for from the specified packahe
 
+    _get_pods
+        Extract pod markers from the currently active package.
+
+        Return an arrayref or undef on fail.
+
     _private_check($symbol)
         return true if the symbol should be considered private
 
@@ -118,12 +123,17 @@ BUGS
     code undocumented. Patches and/or failing tests welcome.
 
 TODO
-    Determine if ancestor packages declare things left undocumented
     Widen the rules for identifying documentation
     Improve the code coverage of the test suite. "Devel::Cover" rocks so
     hard.
 
 HISTORY
+    Version 0.10 2002-02-18
+        Added Pod::Coverage::CountParents which counts the Pod sections from
+        higher in the inheritance tree (it walks @ISA).
+
+        Refactored "_get_pods" into its own method to allow this.
+
     Version 0.09 2001-12-17
         Fixed a typo in mstevens' name (oopsie)
 
