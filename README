@@ -1,4 +1,4 @@
-README for Pod::Coverage 0.15
+README for Pod::Coverage 0.16
 
 =head1 NAME
 
@@ -42,6 +42,14 @@ What changed over the last 3 revisions
 
 =over
 
+=item 0.16	Wednesday 20th October, 2004
+
+	Fixed a MANIFEST bug.
+	Fixed a case reported by Jos Boumans where
+    	=head2 $self->foo; was intepreted as documentation for a
+        C<foo;> method.  (XS4ALL house style)
+	
+
 =item 0.15	Tuesday 19th October, 2004
 
 	Correctly ignores tie subroutines (David Cantrell)
@@ -51,16 +59,6 @@ What changed over the last 3 revisions
 
 	Small fix from Andy Lester for when people entity escape
 	the greater than in the method call arrow.
-
-
-=item 0.13	Monday 29th December, 2003
-
-	Fixed a case reported by Earle Martin, where 
-	=head2 C<foo(),bar(),baz()> wasn't working correctly
-
-	Pod and Test fixes by Andy Lester
-
-	Now we install the pod_cover command line utility.
 
 =back
 
