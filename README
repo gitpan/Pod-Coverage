@@ -1,4 +1,4 @@
-README for Pod::Coverage 0.12
+README for Pod::Coverage 0.13
 
 =head1 NAME
 
@@ -42,6 +42,16 @@ What changed over the last 3 revisions
 
 =over
 
+=item 0.13	Monday 29th December, 2003
+
+	Fixed a case reported by Earle Martin, where 
+	=head2 C<foo(),bar(),baz()> wasn't working correctly
+
+	Pod and Test fixes by Andy Lester
+
+	Now we install the pod_cover command line utility.
+
+
 =item 0.12	Tuesday 30th September, 2003
 
 	Added 'trustme' so that you don't have to lie about subs being private
@@ -58,14 +68,6 @@ What changed over the last 3 revisions
 
 	Sort the uncovered subs reported from the import form.  From a
 	bug report from Tels.
-
-
-=item 0.10	2002-02-18
-
-	Added Pod::Coverage::CountParents which counts the Pod
-	sections from higher in the inheritance tree (it walks @ISA).
-
-	Refactored C<_get_pods> into its own method to allow this.
 
 =back
 

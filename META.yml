@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: Pod-Coverage
-version: 0.12
+version: 0.13
 license: perl
 distribution_type: module
 requires:
@@ -14,14 +14,14 @@ conflicts: {}
 provides:
   Pod::Coverage:
     file: lib/Pod/Coverage.pm
-    version: 0.12
+    version: 0.13
   Pod::Coverage::CountParents:
     file: lib/Pod/Coverage/CountParents.pm
   Pod::Coverage::ExportOnly:
     file: lib/Pod/Coverage/ExportOnly.pm
   Pod::Coverage::Extractor:
     file: lib/Pod/Coverage.pm
-    version: 0.12
+    version: 0.13
   Pod::Coverage::Overloader:
     file: lib/Pod/Coverage/Overloader.pm
-generated_by: Module::Build version 0.20
+generated_by: Module::Build version 0.21
