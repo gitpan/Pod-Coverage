@@ -1,0 +1,97 @@
+NAME
+    Pod::Coverage - Checks if the documentation of a module is comprehensive
+
+SYNOPSIS
+      # all in one invocation
+      use Pod::Coverage package => 'Fishy';
+
+      # straight OO
+      use Pod::Coverage;
+      my $pc = new Pod::Coverage package => 'Pod::Coverage';
+      print "We rock!" if $pc->coverage == 1;
+
+DESCRIPTION
+    Developers hate writing documentation. They'd hate it even more if their
+    computer tattled on them, but maybe they'll be even more thankful in the
+    long run. Even if not, perlmodstyle tells you to, so you must obey.
+
+    This module provides a mechanism for determining if the pod for a given
+    module is comprehensive.
+
+    It expects to find either a =head2 or an =item block documenting a
+    subroutine.
+
+    Consider: # an imaginary Foo.pm package Foo;
+
+     =item foo
+
+     The foo sub
+
+     = cut
+
+     sub foo {}
+     sub bar {}
+
+     1;
+     __END__
+
+    In this example Foo::foo is covered, but Foo::bar is not, so the Foo
+    package is only 50% (0.5) covered
+
+  Methods
+
+    Pod::Coverage->new(package => $package)
+        Creates a new Pod::Coverage object.
+
+        "package" the name of the package to analyse
+
+        "private" an array of regexen which define what symbols are regarded
+        as private (and so need not be documented) defaults to /^_/ and
+        /^import$/
+
+        "also_private" is similar to "private" but these are appended to the
+        default set
+
+    $object->coverage
+        Gives the coverage as a value in the range 0 to 1
+
+    $object->naked
+        Returns a list of uncovered routines, will implicitly call coverage
+        if it's not already been called.
+
+BUGS
+    Due to the method used to identify documented subroutines
+    "Pod::Coverage" may completely miss your house style and declare your
+    code undocumented. Patches and/or failing tests welcome.
+
+    Also the code currently only deals with packages in their own .pm files,
+    this will be adressed with the next release.
+
+TODO
+    Examine globals and explicitly exported symbols
+    Determine if ancestor packages declare things left undocumented
+    Widen the rules for identifying documentation
+    Look for a correponding .pod file to go with your .pm file
+        This is typical of code like Data::Dumper and
+        Quantum::Superpositions, which have extensive documentation, but
+        Pod::Coverage declares them to have none.
+
+HISTORY
+    Version 0.02
+        Fixed up the import form. Removed dependency on List::Util. Added
+        naked method. Exposed private configuration.
+
+    Version 0.01
+        As #london.pm invaded Brighton, people taked about documentation
+        standards. mstevens scribbled something down, richardc coded it, the
+        rest is ponies.
+
+AUTHORS
+    Richard Clamp <richardc@unixbeard.net>
+
+    Michael Stevens <mstevens@etla.org>
+
+    Copyright (c) 2001 Richard Clamp, Micheal Stevens. All rights reserved.
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
