@@ -128,6 +128,10 @@ TODO
     hard.
 
 HISTORY
+    Version 0.11 2002-02-27
+        Sort the uncovered subs reported from the import form. From a bug
+        report from Tels.
+
     Version 0.10 2002-02-18
         Added Pod::Coverage::CountParents which counts the Pod sections from
         higher in the inheritance tree (it walks @ISA).

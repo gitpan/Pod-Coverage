@@ -12,7 +12,7 @@ use DynaLoader ();
 use base 'DynaLoader';
 
 use vars qw/ $VERSION /;
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 =head1 NAME
 
@@ -200,7 +200,7 @@ sub import {
     print $pc->{package}, " has a $self rating of $rating\n";
     my @looky_here = $pc->naked;
     if ( @looky_here > 1 ) {
-        print "The following are uncovered: ", join(", ", @looky_here), "\n";
+        print "The following are uncovered: ", join(", ", sort @looky_here), "\n";
     }
     elsif (@looky_here) {
         print "'$looky_here[0]' is uncovered\n";
@@ -379,6 +379,11 @@ code undocumented.  Patches and/or failing tests welcome.
 =head1 HISTORY
 
 =over
+
+=item Version 0.11 2002-02-27
+
+Sort the uncovered subs reported from the import form.  From a bug
+report from Tels.
 
 =item Version 0.10 2002-02-18
 
