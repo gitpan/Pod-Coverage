@@ -6,17 +6,22 @@ package Pod::Coverage;
 use Devel::Symdump;
 use Pod::Find qw(pod_where);
 
+BEGIN { defined &TRACE_ALL or eval 'sub TRACE_ALL () { 0 }' };
+
 use DynaLoader ();
 use base 'DynaLoader';
 
 use vars qw/ $VERSION /;
-$VERSION = '0.08';
+$VERSION = '0.09';
 
 =head1 NAME
 
 Pod::Coverage - Checks if the documentation of a module is comprehensive
 
 =head1 SYNOPSIS
+
+  # in the beginnning...
+  perl -MPod::Coverage=Pod::Coverage -e666
 
   # all in one invocation
   use Pod::Coverage package => 'Fishy';
@@ -37,7 +42,7 @@ you must obey.
 This module provides a mechanism for determining if the pod for a
 given module is comprehensive.
 
-It expects to find either a =head2 or an =item block documenting a
+It expects to find either a =head(n>1) or an =item block documenting a
 subroutine.
 
 Consider:
@@ -104,21 +109,23 @@ Gives the coverage as a value in the range 0 to 1
 sub coverage {
     my $self = shift;
 
-    my $debug   = $self->{debug};
     my $package = $self->{package};
 
-    print "getting pod location for '$package'\n" if $debug;
+    print "getting pod location for '$package'\n" if TRACE_ALL;
     $self->{pod_from} ||= pod_where( { -inc => 1 }, $package );
     my $pod_from = $self->{pod_from};
-    return unless $pod_from;
+    unless ($pod_from) {
+        $self->{why_unrated} = "couldn't find pod";
+        return;
+    }
 
-    print "parsing '$pod_from'\n" if $debug;
+    print "parsing '$pod_from'\n" if TRACE_ALL;
     my $pod = new Pod::Coverage::Extractor;
     $pod->parse_from_file( $pod_from, '/dev/null' );
 
     my %symbols = map { $_ => 0 } $self->_get_syms($package);
 
-    print "tying shoelaces\n" if $debug;
+    print "tying shoelaces\n" if TRACE_ALL;
     for my $pod ( @{ $pod->{identifiers} } ) {
         $symbols{$pod} = 1 if exists $symbols{$pod};
     }
@@ -126,11 +133,33 @@ sub coverage {
     # stash the results for later
     $self->{symbols} = \%symbols;
 
+    if (TRACE_ALL) {
+        require Data::Dumper;
+        print Data::Dumper::Dumper($self);
+    }
+
     my $symbols    = scalar keys %symbols;
     my $documented = scalar grep { $_ } values %symbols;
-    return unless $symbols;
+    unless ($symbols) {
+        $self->{why_unrated} = "no public symbols defined";
+        return;
+    }
     return $documented / $symbols;
 }
+
+=item $object->why_unrated
+
+C<$object->coverage> may return C<undef>, to indicate that it was
+unable to deduce coverage for a package.  If this happens you should
+be able to check C<why_unrated> to get a useful excuse.
+
+=cut
+
+sub why_unrated {
+    my $self = shift;
+    $self->{why_unrated}
+}
+
 
 =item $object->naked/$object->uncovered
 
@@ -166,15 +195,18 @@ sub covered {
     return grep { $self->{symbols}{$_} } keys %{ $self->{symbols} };
 }
 
-
 sub import {
     my $self = shift;
     return unless @_;
 
+    # one argument - just a package
+    scalar @_ == 1  and  unshift @_, 'package';
+
     # we were called with arguments
     my $pc     = $self->new(@_);
     my $rating = $pc->coverage;
-    $rating = 'unrated' unless defined $rating;
+    $rating = 'unrated ('. $pc->why_unrated .')'
+      unless defined $rating;
     print $pc->{package}, " has a $self rating of $rating\n";
     my @looky_here = $pc->naked;
     if ( @looky_here > 1 ) {
@@ -184,6 +216,28 @@ sub import {
         print "'$looky_here[0]' is uncovered\n";
     }
 }
+
+=back
+
+=head2 Debugging support
+
+In order to allow internals debugging, while allowing the optimiser to
+do it's thang, Pod::Coverage uses constant subs to define how it traces.
+
+Use them like so
+
+ sub Pod::Coverage::TRACE_ALL () { 1 }
+ use Pod::Coverage;
+
+Supported constants are:
+
+=over
+
+=item TRACE_ALL
+
+Trace everything.
+
+Well that's all there is so far, are you glad you came?
 
 =back
 
@@ -216,13 +270,11 @@ sub _get_syms {
     my $self    = shift;
     my $package = shift;
 
-    my $debug = $self->{debug};
-
-    print "requiring '$package'\n" if $debug;
+    print "requiring '$package'\n" if TRACE_ALL;
     eval qq{ require $package };
     return if $@;
 
-    print "walking symbols\n" if $debug;
+    print "walking symbols\n" if TRACE_ALL;
     my $syms = new Devel::Symdump $package;
 
     my @symbols;
@@ -270,9 +322,9 @@ sub command {
 
         foreach my $pod (@pods) {
             # it's dressed up like a method call
-            $pod =~ /->(.*)/   and $pod = $1;
+            $pod =~ /->(.*)/       and $pod = $1;
             # it's wrapped in a pod style B<>
-            $pod =~ /<(.*)>/   and $pod = $1;
+            $pod =~ /<(.*)>/       and $pod = $1;
             # it's got example arguments
             $pod =~ /(\S+)\s*\(/   and $pod = $1;
 
@@ -310,6 +362,19 @@ code undocumented.  Patches and/or failing tests welcome.
 
 =over
 
+=item Version 0.09 2001-12-17
+
+Fixed a typo in mstevens' name (oopsie)
+
+Added C<examples/script-covered> based on an email exchange.
+
+Modified the import form so that if given one argument it's assumed to
+be the package.  From a suggestion by Mark Fowler.
+
+Changed tracing to use optimisable constants.
+
+Added why_unrated.
+
 =item Version 0.08 2001-11-14
 
 Paul Johnson beat me to making Pod::Coverage a Devel::Cover plugin, so
@@ -320,7 +385,7 @@ Ran the code through perltidy, made some of the changes it suggested.
 Worked over the parsing of the also_private flag to give it more
 consistent semantics
 
-Assimilated examples/pod_cover.t from Tels
+Assimilated C<examples/pod_cover.t> from Tels
 
 =item Version 0.07
 
@@ -382,7 +447,7 @@ Richard Clamp <richardc@unixbeard.net>
 
 Michael Stevens <mstevens@etla.org>
 
-Copyright (c) 2001 Richard Clamp, Micheal Stevens. All rights
+Copyright (c) 2001 Richard Clamp, Michael Stevens. All rights
 reserved.  This program is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.
 

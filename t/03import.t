@@ -1,12 +1,14 @@
 #!/usr/bin/perl -w
 use strict;
 use lib 't/lib';
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 
 is( capture(q{ use Pod::Coverage package => 'Simple2'; }), "Simple2 has a Pod::Coverage rating of 0.75\n'naked' is uncovered", "Simple2 works correctly in import form");
 
 is( capture(q{ use Pod::Coverage package => 'Simple7' }), "Simple7 has a Pod::Coverage rating of 0\nThe following are uncovered: foo, bar", 'Simple6 with a private list');
+
+is( capture(q{ use Pod::Coverage 'Simple7' }), "Simple7 has a Pod::Coverage rating of 0\nThe following are uncovered: foo, bar", 'Simple6 with a private list');
 
 sub capture {
     my $code = shift;

@@ -17,5 +17,7 @@ t/lib/Simple4.pod
 t/lib/Simple5.pm
 t/lib/Simple6.pm
 t/lib/Simple7.pm
+t/lib/Simple8.pm
 examples/check_installed
 examples/pod_cover.pl
+examples/script-covered

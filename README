@@ -2,6 +2,9 @@ NAME
     Pod::Coverage - Checks if the documentation of a module is comprehensive
 
 SYNOPSIS
+      # in the beginnning...
+      perl -MPod::Coverage=Pod::Coverage -e666
+
       # all in one invocation
       use Pod::Coverage package => 'Fishy';
 
@@ -18,7 +21,7 @@ DESCRIPTION
     This module provides a mechanism for determining if the pod for a given
     module is comprehensive.
 
-    It expects to find either a =head2 or an =item block documenting a
+    It expects to find either a =head(n>1) or an =item block documenting a
     subroutine.
 
     Consider: # an imaginary Foo.pm package Foo;
@@ -39,7 +42,6 @@ DESCRIPTION
     package is only 50% (0.5) covered
 
   Methods
-
     Pod::Coverage->new(package => $package)
         Creates a new Pod::Coverage object.
 
@@ -57,6 +59,11 @@ DESCRIPTION
     $object->coverage
         Gives the coverage as a value in the range 0 to 1
 
+    $object->why_unrated
+        "$object-"coverage> may return "undef", to indicate that it was
+        unable to deduce coverage for a package. If this happens you should
+        be able to check "why_unrated" to get a useful excuse.
+
     $object->naked/$object->uncovered
         Returns a list of uncovered routines, will implicitly call coverage
         if it's not already been called.
@@ -69,8 +76,23 @@ DESCRIPTION
 
         As with "naked" private identifiers will be skipped.
 
-  Inheritance interface
+  Debugging support
+    In order to allow internals debugging, while allowing the optimiser to
+    do it's thang, Pod::Coverage uses constant subs to define how it traces.
 
+    Use them like so
+
+     sub Pod::Coverage::TRACE_ALL () { 1 }
+     use Pod::Coverage;
+
+    Supported constants are:
+
+    TRACE_ALL
+        Trace everything.
+
+        Well that's all there is so far, are you glad you came?
+
+  Inheritance interface
     These abstract methods while functional in "Pod::Coverage" may make your
     life easier if you want to extend "Pod::Coverage" to fit your house
     style more closely.
@@ -100,7 +122,20 @@ TODO
     Widen the rules for identifying documentation
     Improve the code coverage of the test suite. "Devel::Cover" rocks so
     hard.
+
 HISTORY
+    Version 0.09 2001-12-17
+        Fixed a typo in mstevens' name (oopsie)
+
+        Added "examples/script-covered" based on an email exchange.
+
+        Modified the import form so that if given one argument it's assumed
+        to be the package. From a suggestion by Mark Fowler.
+
+        Changed tracing to use optimisable constants.
+
+        Added why_unrated.
+
     Version 0.08 2001-11-14
         Paul Johnson beat me to making Pod::Coverage a Devel::Cover plugin,
         so that's one less thing in the TODO section.
@@ -111,7 +146,7 @@ HISTORY
         Worked over the parsing of the also_private flag to give it more
         consistent semantics
 
-        Assimilated examples/pod_cover.t from Tels
+        Assimilated "examples/pod_cover.t" from Tels
 
     Version 0.07
         Implemented _CvGV based upon code from Robin Houston. This removes
@@ -155,14 +190,14 @@ HISTORY
         rest is ponies.
 
 SEE ALSO
-    the Test::More manpage, the Devel::Cover manpage
+    Test::More, Devel::Cover
 
 AUTHORS
     Richard Clamp <richardc@unixbeard.net>
 
     Michael Stevens <mstevens@etla.org>
 
-    Copyright (c) 2001 Richard Clamp, Micheal Stevens. All rights reserved.
+    Copyright (c) 2001 Richard Clamp, Michael Stevens. All rights reserved.
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
 
