@@ -1,4 +1,4 @@
-README for Pod::Coverage 0.13
+README for Pod::Coverage 0.14
 
 =head1 NAME
 
@@ -42,6 +42,12 @@ What changed over the last 3 revisions
 
 =over
 
+=item 0.14	Sunday 9th May, 2004
+
+	Small fix from Andy Lester for when people entity escape
+	the greater than in the method call arrow.
+
+
 =item 0.13	Monday 29th December, 2003
 
 	Fixed a case reported by Earle Martin, where 
@@ -62,12 +68,6 @@ What changed over the last 3 revisions
 	Deprecated and gutted Pod::Coverage::Overloader.  The ignored
 	patterns in the base class now include qr/^\(/ which is all it
 	really did only in a stupidly complex manner.
-
-
-=item 0.11	2002-02-27
-
-	Sort the uncovered subs reported from the import form.  From a
-	bug report from Tels.
 
 =back
 
