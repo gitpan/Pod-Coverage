@@ -10,7 +10,8 @@ WriteMakefile(
                          DIST_DEFAULT => 'tardist'
                         },
               'PM' => {
-                       'lib/Pod/Coverage.pm'        => '$(INST_LIBDIR)/Coverage.pm',
+                       'lib/Pod/Coverage.pm'            => '$(INST_LIBDIR)/Coverage.pm',
+                       'lib/Pod/Coverage/ExportOnly.pm' => '$(INST_LIBDIR)/Coverage/ExportOnly.pm',
                       },
               PREREQ_PM => { 'Test::More'     => 0.11,
                              'Devel::Symdump' => 2.01,

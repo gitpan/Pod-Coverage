@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
-use Test::More tests => 12;
+use Test::More tests => 14;
 use lib 't/lib';
 use Pod::Coverage ();
+use Pod::Coverage::ExportOnly ();
 
 my $obj = new Pod::Coverage package => 'Simple1';
 
@@ -43,3 +44,11 @@ is( $obj->coverage, 1, "External .pod grokked" );
 $obj = new Pod::Coverage package => 'Simple5';
 
 is( $obj->coverage, 1, "Multiple docs per item works" );
+
+$obj = new Pod::Coverage package => "Simple6";
+
+is( $obj->coverage, 1/3, "Simple6 is 2/3rds with no extra effort" );
+
+$obj = new Pod::Coverage::ExportOnly package => "Simple6";
+
+is( $obj->coverage, 1/2, "Simple6 is 50% if you only check exports" );

@@ -5,7 +5,7 @@ use Devel::Peek qw(CvGV);
 use Pod::Find qw(pod_where);
 
 use vars qw/ $VERSION /;
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 =head1 NAME
 
@@ -71,6 +71,9 @@ as private (and so need not be documented) defaults to /^_/,
 C<also_private> is similar to C<private> but these are appended to the
 default set
 
+If C<pod_from> is supplied, that file is parsed for the documentation,
+rather than using Pod::Find
+
 =cut
 
 sub new {
@@ -109,26 +112,7 @@ sub coverage {
     my $pod = new Pod::Coverage::Extractor::;
     $pod->parse_from_file($pod_from, '/dev/null');
 
-    print "requiring '$package'\n" if $debug;
-    eval qq{ require $package }; 
-    return if $@;
-
-    print "walking symbols\n" if $debug;
-    my $syms = new Devel::Symdump $package;
-
-    my %symbols;
-    for my $sym ($syms->functions) {
-        # see if said method wasn't just imported from elsewhere
-        my $owner = CvGV(\&{ $sym });
-        $owner =~ s/^\*(.*)::.*?$/$1/;
-        next if $owner ne $self->{package};
-
-        # check if it's on the whitelist
-        $sym =~ s/$self->{package}:://;
-        next if grep { $sym =~ /$_/ } @{ $self->{private} };
-
-        $symbols{$sym} = 0;
-    }
+    my %symbols = map { $_ => 0 } $self->_get_syms($package);
 
     print "tying shoelaces\n" if $debug;
     for my $pod (@{ $pod->{identifiers} }) {
@@ -195,6 +179,68 @@ sub import {
     }
 }
 
+=back
+
+=head2 Inheritance interface
+
+These abstract methods while functional in C<Pod::Coverage> may make
+your life easier if you want to extend C<Pod::Coverage> to fit your
+house style more closely.
+
+B<NOTE> Please consider this interface as in a state of flux until
+this comment goes away.
+
+=over
+
+=item _get_syms($package)
+
+return a list of symbols to check for from the specified packahe
+
+=cut
+
+# this one walks the symbol tree
+sub _get_syms {
+    my $self = shift;
+    my $package = shift;
+
+    my $debug = $self->{debug};
+
+    print "requiring '$package'\n" if $debug;
+    eval qq{ require $package }; 
+    return if $@;
+
+    print "walking symbols\n" if $debug;
+    my $syms = new Devel::Symdump $package;
+
+    my @symbols;
+    for my $sym ($syms->functions) {
+        # see if said method wasn't just imported from elsewhere
+        my $owner = CvGV(\&{ $sym });
+        $owner =~ s/^\*(.*)::.*?$/$1/;
+        next if $owner ne $self->{package};
+
+        # check if it's on the whitelist
+        $sym =~ s/$self->{package}:://;
+        next if $self->_private_check($sym);
+
+        push @symbols, $sym;
+    }
+    return @symbols;
+}
+
+=item _private_check($symbol)
+
+return true if the symbol should be considered private
+
+=cut
+
+sub _private_check {
+    my $self = shift;
+    my $sym = shift;
+    return grep { $sym =~ /$_/ } @{ $self->{private} };
+}
+
+
 package Pod::Coverage::Extractor;
 use Pod::Parser;
 use vars qw/ @ISA /;
@@ -221,6 +267,7 @@ sub command {
     }
 }
 
+
 1;
 
 __END__
@@ -237,11 +284,13 @@ code undocumented.  Patches and/or failing tests welcome.
 
 =over
 
-=item Examine exportable symbols
-
 =item Determine if ancestor packages declare things left undocumented
 
 =item Widen the rules for identifying documentation
+
+=item Improve the code coverage of the test suite.  C<Devel::Cover> rocks so hard.
+
+=item Investigate making Pod::Coverage produce suitable data for use by Devel::Cover
 
 =back
 
@@ -249,11 +298,18 @@ code undocumented.  Patches and/or failing tests welcome.
 
 =over
 
+=item Version 0.06
+
+First cut at making inheritance easy.  Pod::Checker::ExportOnly isa
+Pod::Checker which only checks what Exporter is allowed to hand out.
+
+Fixed up bad docs from the 0.05 release.
+
 =item Version 0.05
 
 Used Pod::Find to deal with alternative locations for pod files.
 Introduced pod_from.  Merged some patches from Schwern.  Added in
-clothed.  Assimilated C<examples/check_installed> as contributed by
+covered.  Assimilated C<examples/check_installed> as contributed by
 Kirrily "Skud" Robert <skud@cpan.org>.  Copes with multple functions
 documented by one section.  Added uncovered as a synonym for naked.
 
@@ -278,6 +334,10 @@ standards.  mstevens scribbled something down, richardc coded it, the
 rest is ponies.
 
 =back
+
+=head1 SEE ALSO
+
+L<Test::More>, L<Devel::Cover>
 
 =head1 AUTHORS
 

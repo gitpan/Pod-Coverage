@@ -52,6 +52,9 @@ DESCRIPTION
         "also_private" is similar to "private" but these are appended to the
         default set
 
+        If "pod_from" is supplied, that file is parsed for the
+        documentation, rather than using Pod::Find
+
     $object->coverage
         Gives the coverage as a value in the range 0 to 1
 
@@ -67,20 +70,44 @@ DESCRIPTION
 
         As with "naked" private identifiers will be skipped.
 
+  Inheritance interface
+
+    These abstract methods while functional in "Pod::Coverage" may make your
+    life easier if you want to extend "Pod::Coverage" to fit your house
+    style more closely.
+
+    NOTE Please consider this interface as in a state of flux until this
+    comment goes away.
+
+    _get_syms($package)
+        return a list of symbols to check for from the specified packahe
+
+    _private_check($symbol)
+        return true if the symbol should be considered private
+
 BUGS
     Due to the method used to identify documented subroutines
     "Pod::Coverage" may completely miss your house style and declare your
     code undocumented. Patches and/or failing tests welcome.
 
 TODO
-    Examine exportable symbols
     Determine if ancestor packages declare things left undocumented
     Widen the rules for identifying documentation
+    Improve the code coverage of the test suite. "Devel::Cover" rocks so
+    hard.
+    Investigate making Pod::Coverage produce suitable data for use by
+    Devel::Cover
 HISTORY
+    Version 0.06
+        First cut at making inheritance easy. Pod::Checker::ExportOnly isa
+        Pod::Checker which only checks what Exporter is allowed to hand out.
+
+        Fixed up bad docs from the 0.05 release.
+
     Version 0.05
         Used Pod::Find to deal with alternative locations for pod files.
         Introduced pod_from. Merged some patches from Schwern. Added in
-        clothed. Assimilated "examples/check_installed" as contributed by
+        covered. Assimilated "examples/check_installed" as contributed by
         Kirrily "Skud" Robert <skud@cpan.org>. Copes with multple functions
         documented by one section. Added uncovered as a synonym for naked.
 
@@ -99,6 +126,9 @@ HISTORY
         As #london.pm invaded Brighton, people taked about documentation
         standards. mstevens scribbled something down, richardc coded it, the
         rest is ponies.
+
+SEE ALSO
+    the Test::More manpage, the Devel::Cover manpage
 
 AUTHORS
     Richard Clamp <richardc@unixbeard.net>
