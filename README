@@ -1,4 +1,4 @@
-README for Pod::Coverage 0.14
+README for Pod::Coverage 0.15
 
 =head1 NAME
 
@@ -42,6 +42,11 @@ What changed over the last 3 revisions
 
 =over
 
+=item 0.15	Tuesday 19th October, 2004
+
+	Correctly ignores tie subroutines (David Cantrell)
+
+
 =item 0.14	Sunday 9th May, 2004
 
 	Small fix from Andy Lester for when people entity escape
@@ -56,18 +61,6 @@ What changed over the last 3 revisions
 	Pod and Test fixes by Andy Lester
 
 	Now we install the pod_cover command line utility.
-
-
-=item 0.12	Tuesday 30th September, 2003
-
-	Added 'trustme' so that you don't have to lie about subs being private
-	when the module fails to find their docs.  Work by David Cantrell.
-
-	Pulled HISTORY out into a Changes file.
-
-	Deprecated and gutted Pod::Coverage::Overloader.  The ignored
-	patterns in the base class now include qr/^\(/ which is all it
-	really did only in a stupidly complex manner.
 
 =back
 
@@ -85,7 +78,7 @@ some contributions from David Cantrell <david@cantrell.org.uk>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001, 2003, 2003 Richard Clamp, Michael Stevens. All
+Copyright (c) 2001, 2003, 2004 Richard Clamp, Michael Stevens. All
 rights reserved.  This program is free software; you can redistribute
 it and/or modify it under the same terms as Perl itself.
 

@@ -1,8 +1,7 @@
 --- #YAML:1.0
 name: Pod-Coverage
-version: 0.14
-author:
-  - ~
+version: 0.15
+author: ~
 abstract: |-
   Checks if the documentation of a module is comprehensive
 license: perl
@@ -15,14 +14,14 @@ build_requires:
 provides:
   Pod::Coverage:
     file: lib/Pod/Coverage.pm
-    version: 0.14
+    version: 0.15
   Pod::Coverage::CountParents:
     file: lib/Pod/Coverage/CountParents.pm
   Pod::Coverage::ExportOnly:
     file: lib/Pod/Coverage/ExportOnly.pm
   Pod::Coverage::Extractor:
     file: lib/Pod/Coverage.pm
-    version: 0.14
+    version: 0.15
   Pod::Coverage::Overloader:
     file: lib/Pod/Coverage/Overloader.pm
-generated_by: Module::Build version 0.24
+generated_by: Module::Build version 0.25
