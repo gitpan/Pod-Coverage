@@ -4,7 +4,7 @@ use Devel::Symdump;
 use Devel::Peek qw(CvGV);
 
 use vars qw/ $VERSION /;
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 =head1 NAME
 
@@ -64,8 +64,8 @@ Creates a new Pod::Coverage object.
 C<package> the name of the package to analyse
 
 C<private> an array of regexen which define what symbols are regarded
-as private (and so need not be documented) defaults to /^_/ and
-/^import$/
+as private (and so need not be documented) defaults to /^_/,
+/^import$/, /^DESTROY/, and /^AUTOLOAD/.
 
 C<also_private> is similar to C<private> but these are appended to the
 default set
@@ -77,7 +77,7 @@ sub new {
     my %args = @_;
     my $class = ref $referent || $referent;
 
-    my $private = $args{private} || [ qr/^_/, qr/^import$/, @{ $args{also_private} || [] } ];
+    my $private = $args{private} || [ qr/^_/, qr/^import$/, qr/^DESTROY/, qr/^AUTOLOAD/, @{ $args{also_private} || [] } ];
     my $self = bless { @_, private => $private }, $class;
 }
 
@@ -126,7 +126,7 @@ sub coverage {
         # it's wrapped in a pod style B<>
         $pod =~ /<(.*)>/   and $pod = $1;
         # it's got example arguments
-        $pod =~ /(.*)\(/   and $pod = $1;
+        $pod =~ /(\S+)\s*\(/   and $pod = $1;
 
         $symbols{$pod} = 1 if exists $symbols{$pod};
     }
@@ -179,7 +179,7 @@ use vars qw/ @ISA /;
 sub command {
     my $self = shift;
     my ($command, $text, $line_num) = @_;
-    if ($command eq 'item' || $command eq 'head2') {
+    if ($command eq 'item' || $command =~ /^head(?:2|3|4)/) {
         # lose trailing newlines, and take note
         return unless $text =~ /(.*)/;
         push @{$self->{identifiers}}, $1;
@@ -222,6 +222,11 @@ have none.
 =head1 HISTORY
 
 =over
+
+=item Version 0.03
+
+Applied a patch from Dave Rolsky (barely 6 hours after release of
+0.02) to improve scanning of pod markers.
 
 =item Version 0.02
 

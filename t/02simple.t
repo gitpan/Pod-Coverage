@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 use strict;
-use Test::More tests => 7;
+use Test::More tests => 8;
 use lib 't/lib';
 use Pod::Coverage ();
 
@@ -27,3 +27,7 @@ is ( $obj->coverage, 1, "it's also a private bar" );
 $obj = new Pod::Coverage package => 'Pod::Coverage';
 
 is( $obj->coverage, 1, "Pod::Coverage is covered");
+
+$obj = new Pod::Coverage package => 'Simple3';
+
+is( $obj->coverage, 1, 'Simple3 is covered' );
