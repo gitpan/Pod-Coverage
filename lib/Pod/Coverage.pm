@@ -1,7 +1,5 @@
 use strict;
 
-package Pod::Coverage::Extractor; # placeholder, we'll come back to this later
-
 package Pod::Coverage;
 use Devel::Symdump;
 use Pod::Find qw(pod_where);
@@ -12,7 +10,7 @@ use DynaLoader ();
 use base 'DynaLoader';
 
 use vars qw/ $VERSION /;
-$VERSION = '0.11';
+$VERSION = '0.12';
 
 =head1 NAME
 
@@ -28,7 +26,7 @@ Pod::Coverage - Checks if the documentation of a module is comprehensive
 
   # straight OO
   use Pod::Coverage;
-  my $pc = new Pod::Coverage package => 'Pod::Coverage';
+  my $pc = Pod::Coverage->new(package => 'Pod::Coverage');
   print "We rock!" if $pc->coverage == 1;
 
 
@@ -80,6 +78,10 @@ as private (and so need not be documented) defaults to /^_/,
 
 C<also_private> items are appended to the private list
 
+C<trustme> an array of regexen which define what symbols you just want
+us to assume are properly documented even if we can't find any docs
+for them
+
 If C<pod_from> is supplied, that file is parsed for the documentation,
 rather than using Pod::Find
 
@@ -90,13 +92,18 @@ sub new {
     my %args     = @_;
     my $class    = ref $referent || $referent;
 
-    my $private = $args{private} || [ qr/^_/,
-                                      qr/^import$/,
-                                      qr/^DESTROY$/,
-                                      qr/^AUTOLOAD$/,
-                                      qr/^bootstrap$/ ];
+    my $private = $args{private} || [
+        qr/^_/,
+        qr/^import$/,
+        qr/^DESTROY$/,
+        qr/^AUTOLOAD$/,
+        qr/^bootstrap$/,
+        qr/^\(/,
+       ];
     push @$private, @{ $args{also_private} || [] };
-    my $self = bless { @_, private => $private }, $class;
+    my $trustme = $args{trustme} || [];
+
+    my $self = bless { @_, private => $private, trustme => $trustme }, $class;
 }
 
 =item $object->coverage
@@ -118,6 +125,10 @@ sub coverage {
     print "tying shoelaces\n" if TRACE_ALL;
     for my $pod ( @$pods ) {
         $symbols{$pod} = 1 if exists $symbols{$pod};
+    }
+
+    foreach my $sym (keys %symbols) {
+        $symbols{$sym} = 1 if $self->_trustme_check($sym);
     }
 
     # stash the results for later
@@ -156,7 +167,7 @@ sub why_unrated {
 Returns a list of uncovered routines, will implicitly call coverage if
 it's not already been called.
 
-Note, private identifiers will be skipped.
+Note, private and 'trustme' identifiers will be skipped.
 
 =cut
 
@@ -174,7 +185,7 @@ sub naked {
 Returns a list of covered routines, will implicitly call coverage if
 it's not previously been called.
 
-As with C<naked> private identifiers will be skipped.
+As with C<naked> private and 'trustme' identifiers will be skipped.
 
 =cut
 
@@ -265,7 +276,7 @@ sub _get_syms {
     return if $@;
 
     print "walking symbols\n" if TRACE_ALL;
-    my $syms = new Devel::Symdump $package;
+    my $syms = Devel::Symdump->new($package);
 
     my @symbols;
     for my $sym ( $syms->functions ) {
@@ -306,7 +317,7 @@ sub _get_pods {
     }
 
     print "parsing '$pod_from'\n" if TRACE_ALL;
-    my $pod = new Pod::Coverage::Extractor;
+    my $pod = Pod::Coverage::Extractor->new;
     $pod->parse_from_file( $pod_from, '/dev/null' );
 
     return $pod->{identifiers} || [];
@@ -323,6 +334,17 @@ sub _private_check {
     my $self = shift;
     my $sym = shift;
     return grep { $sym =~ /$_/ } @{ $self->{private} };
+}
+
+=item _trustme_check($symbol)
+
+return true if the symbol is a 'trustme' symbol
+
+=cut
+
+sub _trustme_check {
+    my($self, $sym) = @_;
+    return grep { $sym =~ /$_/ } @{$self->{trustme} };
 }
 
 bootstrap Pod::Coverage;
@@ -376,97 +398,6 @@ code undocumented.  Patches and/or failing tests welcome.
 
 =back
 
-=head1 HISTORY
-
-=over
-
-=item Version 0.11 2002-02-27
-
-Sort the uncovered subs reported from the import form.  From a bug
-report from Tels.
-
-=item Version 0.10 2002-02-18
-
-Added Pod::Coverage::CountParents which counts the Pod sections from
-higher in the inheritance tree (it walks @ISA).
-
-Refactored C<_get_pods> into its own method to allow this.
-
-=item Version 0.09 2001-12-17
-
-Fixed a typo in mstevens' name (oopsie)
-
-Added C<examples/script-covered> based on an email exchange.
-
-Modified the import form so that if given one argument it's assumed to
-be the package.  From a suggestion by Mark Fowler.
-
-Changed tracing to use optimisable constants.
-
-Added why_unrated.
-
-=item Version 0.08 2001-11-14
-
-Paul Johnson beat me to making Pod::Coverage a Devel::Cover plugin, so
-that's one less thing in the TODO section.
-
-Ran the code through perltidy, made some of the changes it suggested.
-
-Worked over the parsing of the also_private flag to give it more
-consistent semantics
-
-Assimilated C<examples/pod_cover.t> from Tels
-
-=item Version 0.07
-
-Implemented _CvGV based upon code from Robin Houston.  This removes
-the dependency on Devel::Peek (the CPAN version of Devel::Peek doesn't
-supply CvGV).  This also happily makes the module work on with perl
-5.005_03.
-
-Fixed a bug in the import routine which was preventing the use form of
-derived classes.  Reports a module is unrated if coverage returns
-undef.
-
-Added Pod::Checker::Overloader.
-
-=item Version 0.06
-
-First cut at making inheritance easy.  Pod::Checker::ExportOnly isa
-Pod::Checker which only checks what Exporter is allowed to hand out.
-
-Fixed up bad docs from the 0.05 release.
-
-=item Version 0.05
-
-Used Pod::Find to deal with alternative locations for pod files.
-Introduced pod_from.  Merged some patches from Schwern.  Added in
-covered.  Assimilated C<examples/check_installed> as contributed by
-Kirrily "Skud" Robert <skud@cpan.org>.  Copes with multple functions
-documented by one section.  Added uncovered as a synonym for naked.
-
-=item Version 0.04
-
-Just 0.03 with a correctly generated README file
-
-=item Version 0.03
-
-Applied a patch from Dave Rolsky (barely 6 hours after release of
-0.02) to improve scanning of pod markers.
-
-=item Version 0.02
-
-Fixed up the import form.  Removed dependency on List::Util.  Added
-naked method.  Exposed private configuration.
-
-=item Version 0.01
-
-As #london.pm invaded Brighton, people taked about documentation
-standards.  mstevens scribbled something down, richardc coded it, the
-rest is ponies.
-
-=back
-
 =head1 SEE ALSO
 
 L<Test::More>, L<Devel::Cover>
@@ -477,8 +408,12 @@ Richard Clamp <richardc@unixbeard.net>
 
 Michael Stevens <mstevens@etla.org>
 
-Copyright (c) 2001 Richard Clamp, Michael Stevens. All rights
-reserved.  This program is free software; you can redistribute it
-and/or modify it under the same terms as Perl itself.
+some contributions from David Cantrell <david@cantrell.org.uk>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2001, 2003, 2003 Richard Clamp, Michael Stevens. All
+rights reserved.  This program is free software; you can redistribute
+it and/or modify it under the same terms as Perl itself.
 
 =cut

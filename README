@@ -1,217 +1,89 @@
-NAME
-    Pod::Coverage - Checks if the documentation of a module is comprehensive
+README for Pod::Coverage 0.12
 
-SYNOPSIS
-      # in the beginnning...
-      perl -MPod::Coverage=Pod::Coverage -e666
+=head1 NAME
 
-      # all in one invocation
-      use Pod::Coverage package => 'Fishy';
+Pod::Coverage - Checks if the documentation of a module is comprehensive
 
-      # straight OO
-      use Pod::Coverage;
-      my $pc = new Pod::Coverage package => 'Pod::Coverage';
-      print "We rock!" if $pc->coverage == 1;
+=head1 SYNOPSIS
 
-DESCRIPTION
-    Developers hate writing documentation. They'd hate it even more if their
-    computer tattled on them, but maybe they'll be even more thankful in the
-    long run. Even if not, perlmodstyle tells you to, so you must obey.
+  # in the beginnning...
+  perl -MPod::Coverage=Pod::Coverage -e666
 
-    This module provides a mechanism for determining if the pod for a given
-    module is comprehensive.
+  # all in one invocation
+  use Pod::Coverage package => 'Fishy';
 
-    It expects to find either a =head(n>1) or an =item block documenting a
-    subroutine.
+  # straight OO
+  use Pod::Coverage;
+  my $pc = Pod::Coverage->new(package => 'Pod::Coverage');
+  print "We rock!" if $pc->coverage == 1;
 
-    Consider: # an imaginary Foo.pm package Foo;
 
-     =item foo
 
-     The foo sub
+=head1 DEPENDENCIES
 
-     = cut
+This module has external dependencies on the following modules:
 
-     sub foo {}
-     sub bar {}
+ Devel::Symdump	2.01
+ Pod::Find	0.21
+ Pod::Parser	1.13
 
-     1;
-     __END__
+=head1 INSTALLATION
 
-    In this example Foo::foo is covered, but Foo::bar is not, so the Foo
-    package is only 50% (0.5) covered
+ perl Build.PL
+ perl Build test
 
-  Methods
-    Pod::Coverage->new(package => $package)
-        Creates a new Pod::Coverage object.
+and if all goes well
 
-        "package" the name of the package to analyse
+ perl Build install
 
-        "private" an array of regexen which define what symbols are regarded
-        as private (and so need not be documented) defaults to /^_/,
-        /^import$/, /^DESTROY/, /^AUTOLOAD/, /^bootstrap$/.
+=head1 HISTORY
 
-        "also_private" items are appended to the private list
+What changed over the last 3 revisions
 
-        If "pod_from" is supplied, that file is parsed for the
-        documentation, rather than using Pod::Find
+=over
 
-    $object->coverage
-        Gives the coverage as a value in the range 0 to 1
+=item 0.12	Tuesday 30th September, 2003
 
-    $object->why_unrated
-        "$object-"coverage> may return "undef", to indicate that it was
-        unable to deduce coverage for a package. If this happens you should
-        be able to check "why_unrated" to get a useful excuse.
+	Added 'trustme' so that you don't have to lie about subs being private
+	when the module fails to find their docs.  Work by David Cantrell.
 
-    $object->naked/$object->uncovered
-        Returns a list of uncovered routines, will implicitly call coverage
-        if it's not already been called.
+	Pulled HISTORY out into a Changes file.
 
-        Note, private identifiers will be skipped.
+	Deprecated and gutted Pod::Coverage::Overloader.  The ignored
+	patterns in the base class now include qr/^\(/ which is all it
+	really did only in a stupidly complex manner.
 
-    $object->covered
-        Returns a list of covered routines, will implicitly call coverage if
-        it's not previously been called.
 
-        As with "naked" private identifiers will be skipped.
+=item 0.11	2002-02-27
 
-  Debugging support
-    In order to allow internals debugging, while allowing the optimiser to
-    do it's thang, Pod::Coverage uses constant subs to define how it traces.
+	Sort the uncovered subs reported from the import form.  From a
+	bug report from Tels.
 
-    Use them like so
 
-     sub Pod::Coverage::TRACE_ALL () { 1 }
-     use Pod::Coverage;
+=item 0.10	2002-02-18
 
-    Supported constants are:
+	Added Pod::Coverage::CountParents which counts the Pod
+	sections from higher in the inheritance tree (it walks @ISA).
 
-    TRACE_ALL
-        Trace everything.
+	Refactored C<_get_pods> into its own method to allow this.
 
-        Well that's all there is so far, are you glad you came?
+=back
 
-  Inheritance interface
-    These abstract methods while functional in "Pod::Coverage" may make your
-    life easier if you want to extend "Pod::Coverage" to fit your house
-    style more closely.
+=head1 SEE ALSO
 
-    NOTE Please consider this interface as in a state of flux until this
-    comment goes away.
+L<Test::More>, L<Devel::Cover>
 
-    $object->_CvGV($symbol)
-        Return the GV for the coderef supplied. Used by _get_syms to
-        identify locally defined code.
+=head1 AUTHORS
 
-        You probably won't need to override this one.
+Richard Clamp <richardc@unixbeard.net>
 
-    $object->_get_syms($package)
-        return a list of symbols to check for from the specified packahe
+Michael Stevens <mstevens@etla.org>
 
-    _get_pods
-        Extract pod markers from the currently active package.
+some contributions from David Cantrell <david@cantrell.org.uk>
 
-        Return an arrayref or undef on fail.
+=head1 COPYRIGHT
 
-    _private_check($symbol)
-        return true if the symbol should be considered private
-
-BUGS
-    Due to the method used to identify documented subroutines
-    "Pod::Coverage" may completely miss your house style and declare your
-    code undocumented. Patches and/or failing tests welcome.
-
-TODO
-    Widen the rules for identifying documentation
-    Improve the code coverage of the test suite. "Devel::Cover" rocks so
-    hard.
-
-HISTORY
-    Version 0.11 2002-02-27
-        Sort the uncovered subs reported from the import form. From a bug
-        report from Tels.
-
-    Version 0.10 2002-02-18
-        Added Pod::Coverage::CountParents which counts the Pod sections from
-        higher in the inheritance tree (it walks @ISA).
-
-        Refactored "_get_pods" into its own method to allow this.
-
-    Version 0.09 2001-12-17
-        Fixed a typo in mstevens' name (oopsie)
-
-        Added "examples/script-covered" based on an email exchange.
-
-        Modified the import form so that if given one argument it's assumed
-        to be the package. From a suggestion by Mark Fowler.
-
-        Changed tracing to use optimisable constants.
-
-        Added why_unrated.
-
-    Version 0.08 2001-11-14
-        Paul Johnson beat me to making Pod::Coverage a Devel::Cover plugin,
-        so that's one less thing in the TODO section.
-
-        Ran the code through perltidy, made some of the changes it
-        suggested.
-
-        Worked over the parsing of the also_private flag to give it more
-        consistent semantics
-
-        Assimilated "examples/pod_cover.t" from Tels
-
-    Version 0.07
-        Implemented _CvGV based upon code from Robin Houston. This removes
-        the dependency on Devel::Peek (the CPAN version of Devel::Peek
-        doesn't supply CvGV). This also happily makes the module work on
-        with perl 5.005_03.
-
-        Fixed a bug in the import routine which was preventing the use form
-        of derived classes. Reports a module is unrated if coverage returns
-        undef.
-
-        Added Pod::Checker::Overloader.
-
-    Version 0.06
-        First cut at making inheritance easy. Pod::Checker::ExportOnly isa
-        Pod::Checker which only checks what Exporter is allowed to hand out.
-
-        Fixed up bad docs from the 0.05 release.
-
-    Version 0.05
-        Used Pod::Find to deal with alternative locations for pod files.
-        Introduced pod_from. Merged some patches from Schwern. Added in
-        covered. Assimilated "examples/check_installed" as contributed by
-        Kirrily "Skud" Robert <skud@cpan.org>. Copes with multple functions
-        documented by one section. Added uncovered as a synonym for naked.
-
-    Version 0.04
-        Just 0.03 with a correctly generated README file
-
-    Version 0.03
-        Applied a patch from Dave Rolsky (barely 6 hours after release of
-        0.02) to improve scanning of pod markers.
-
-    Version 0.02
-        Fixed up the import form. Removed dependency on List::Util. Added
-        naked method. Exposed private configuration.
-
-    Version 0.01
-        As #london.pm invaded Brighton, people taked about documentation
-        standards. mstevens scribbled something down, richardc coded it, the
-        rest is ponies.
-
-SEE ALSO
-    Test::More, Devel::Cover
-
-AUTHORS
-    Richard Clamp <richardc@unixbeard.net>
-
-    Michael Stevens <mstevens@etla.org>
-
-    Copyright (c) 2001 Richard Clamp, Michael Stevens. All rights reserved.
-    This program is free software; you can redistribute it and/or modify it
-    under the same terms as Perl itself.
+Copyright (c) 2001, 2003, 2003 Richard Clamp, Michael Stevens. All
+rights reserved.  This program is free software; you can redistribute
+it and/or modify it under the same terms as Perl itself.
 
