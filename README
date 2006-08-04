@@ -1,4 +1,4 @@
-README for Pod::Coverage 0.17
+README for Pod::Coverage 0.18
 
 =head1 NAME
 
@@ -42,6 +42,23 @@ What changed over the last 3 revisions
 
 =over
 
+=item 0.18    Friday 4th August, 2006
+
+	Rewrite _CvGV in terms of B::CV - no xs dependency anymore
+	(suggested by Tim Bunce)
+
+        Add the (FETCH|MODIFY)_$foo_ATTRIBUTES methods to the private
+	stoplists. (rt #12451)
+
+        Support documentation where the method name is documented in a
+	::qualified style (rt #14635)
+
+	Ignores new (5.8) magic CLONE and CLONE_SKIP methods. (rt #17489)
+
+	Added a nonwhitespace option (Alex - rt #14950)
+
+
+
 =item 0.17	Tuesday 23rd November, 2004
 
 	Fixed a further case reported by Jos Boumans where
@@ -56,11 +73,6 @@ What changed over the last 3 revisions
     	=head2 $self->foo; was intepreted as documentation for a
         C<foo;> method.  (XS4ALL house style)
 	
-
-=item 0.15	Tuesday 19th October, 2004
-
-	Correctly ignores tie subroutines (David Cantrell)
-
 =back
 
 =head1 SEE ALSO
@@ -77,7 +89,7 @@ some contributions from David Cantrell <david@cantrell.org.uk>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001, 2003, 2004 Richard Clamp, Michael Stevens. All
-rights reserved.  This program is free software; you can redistribute
-it and/or modify it under the same terms as Perl itself.
+Copyright (c) 2001, 2003, 2004, 2006 Richard Clamp, Michael
+Stevens. All rights reserved.  This program is free software; you can
+redistribute it and/or modify it under the same terms as Perl itself.
 

@@ -2,15 +2,13 @@ use strict;
 
 package Pod::Coverage;
 use Devel::Symdump;
+use B;
 use Pod::Find qw(pod_where);
 
 BEGIN { defined &TRACE_ALL or eval 'sub TRACE_ALL () { 0 }' };
 
-use DynaLoader ();
-use base 'DynaLoader';
-
 use vars qw/ $VERSION /;
-$VERSION = '0.17';
+$VERSION = '0.18';
 
 =head1 NAME
 
@@ -73,10 +71,22 @@ Creates a new Pod::Coverage object.
 C<package> the name of the package to analyse
 
 C<private> an array of regexen which define what symbols are regarded
-as private (and so need not be documented) defaults to /^_/,
-/^import$/, /^DESTROY$/, /^AUTOLOAD$/, /^bootstrap$/, /^(TIE(SCALAR|ARRAY|HASH|HANDLE)|FETCH|STORE|UNTIE|FETCHSIZE|STORESIZE|POP|PUSH|SHIFT|UNSHIFT|SPLICE|DELETE|EXISTS|EXTEND|CLEAR|FIRSTKEY|NEXTKEY|PRINT|PRINTF|WRITE|READLINE|GETC|READ|CLOSE|BINMODE|OPEN|EOF|FILENO|SEEK|TELL)$/.  That last big one covers all the
-required and optional methods for tie()d objects, as these methods are
-(hardly) ever called by a user, being used internally by perl.
+as private (and so need not be documented) defaults to [ qr/^_/,
+qr/^import$/, qr/^DESTROY$/, qr/^AUTOLOAD$/, qr/^bootstrap$/,
+        qr/^(TIE( SCALAR | ARRAY | HASH | HANDLE ) |
+             FETCH | STORE | UNTIE | FETCHSIZE | STORESIZE |
+             POP | PUSH | SHIFT | UNSHIFT | SPLICE | DELETE |
+             EXISTS | EXTEND | CLEAR | FIRSTKEY | NEXTKEY | PRINT | PRINTF |
+             WRITE | READLINE | GETC | READ | CLOSE | BINMODE | OPEN |
+             EOF | FILENO | SEEK | TELL)$/x,
+        qr/^( MODIFY | FETCH )_( REF | SCALAR | ARRAY | HASH | CODE |
+                                 GLOB | FORMAT | IO)_ATTRIBUTES$/x,
+        qr/^CLONE(_SKIP)?$/,
+]
+
+This should cover all the usual magical methods for tie()d objects,
+attributes, generally all the methods that are typically not called by
+a user, but instead being used internally by perl.
 
 C<also_private> items are appended to the private list
 
@@ -86,6 +96,9 @@ for them
 
 If C<pod_from> is supplied, that file is parsed for the documentation,
 rather than using Pod::Find
+
+If C<nonwhitespace> is supplied, then only POD sections which have
+non-whitespace characters will count towards being documented.
 
 =cut
 
@@ -101,12 +114,21 @@ sub new {
         qr/^AUTOLOAD$/,
         qr/^bootstrap$/,
         qr/^\(/,
-        qr/^(TIE(SCALAR|ARRAY|HASH|HANDLE)|FETCH|STORE|UNTIE|FETCHSIZE|STORESIZE|POP|PUSH|SHIFT|UNSHIFT|SPLICE|DELETE|EXISTS|EXTEND|CLEAR|FIRSTKEY|NEXTKEY|PRINT|PRINTF|WRITE|READLINE|GETC|READ|CLOSE|BINMODE|OPEN|EOF|FILENO|SEEK|TELL)$/
+        qr/^(TIE( SCALAR | ARRAY | HASH | HANDLE ) |
+             FETCH | STORE | UNTIE | FETCHSIZE | STORESIZE |
+             POP | PUSH | SHIFT | UNSHIFT | SPLICE | DELETE |
+             EXISTS | EXTEND | CLEAR | FIRSTKEY | NEXTKEY | PRINT | PRINTF |
+             WRITE | READLINE | GETC | READ | CLOSE | BINMODE | OPEN |
+             EOF | FILENO | SEEK | TELL)$/x,
+        qr/^( MODIFY | FETCH )_( REF | SCALAR | ARRAY | HASH | CODE |
+                                 GLOB | FORMAT | IO)_ATTRIBUTES $/x,
+        qr/^CLONE(_SKIP)?$/,
        ];
     push @$private, @{ $args{also_private} || [] };
     my $trustme = $args{trustme} || [];
+    my $nonwhitespace = $args{nonwhitespace} || undef;
 
-    my $self = bless { @_, private => $private, trustme => $trustme }, $class;
+    my $self = bless { @_, private => $private, trustme => $trustme, nonwhitespace => $nonwhitespace }, $class;
 }
 
 =item $object->coverage
@@ -276,6 +298,7 @@ sub _get_syms {
 
     print "requiring '$package'\n" if TRACE_ALL;
     eval qq{ require $package };
+    print "require failed with $@\n" if TRACE_ALL and $@;
     return if $@;
 
     print "walking symbols\n" if TRACE_ALL;
@@ -321,6 +344,7 @@ sub _get_pods {
 
     print "parsing '$pod_from'\n" if TRACE_ALL;
     my $pod = Pod::Coverage::Extractor->new;
+    $pod->{nonwhitespace} = $self->{nonwhitespace};
     $pod->parse_from_file( $pod_from, '/dev/null' );
 
     return $pod->{identifiers} || [];
@@ -347,10 +371,20 @@ return true if the symbol is a 'trustme' symbol
 
 sub _trustme_check {
     my($self, $sym) = @_;
-    return grep { $sym =~ /$_/ } @{$self->{trustme} };
+    return grep { $sym =~ /$_/ } @{ $self->{trustme} };
 }
 
-bootstrap Pod::Coverage;
+sub _CvGV {
+    my $self = shift;
+    my $cv = shift;
+    my $b_cv = B::svref_2object( $cv );
+    # perl 5.6.2's B doesn't have an object_2svref.  in 5.8 you can
+    # just do this:
+    # return *{ $b_cv->GV->object_2svref };
+    # but for backcompat we're forced into this uglyness:
+    no strict 'refs';
+    return *{ $b_cv->GV->STASH->NAME . "::" . $b_cv->GV->NAME };
+}
 
 
 package Pod::Coverage::Extractor;
@@ -365,6 +399,7 @@ sub command {
     if ($command eq 'item' || $command =~ /^head(?:2|3|4)/) {
         # take a closer look
         my @pods = ($text =~ /\s*([^\s\|,\/]+)/g);
+        $self->{recent} = [];
 
         foreach my $pod (@pods) {
             print "Considering: '$pod'\n" if debug;
@@ -372,6 +407,8 @@ sub command {
             # it's dressed up like a method cal
             $pod =~ /-E<\s*gt\s*>(.*)/  and $pod = $1;
             $pod =~ /->(.*)/            and $pod = $1;
+            # it's used as a (bare) fully qualified name
+            $pod =~ /\w+(?:::\w+)*::(\w+)/ and $pod = $1;
             # it's wrapped in a pod style B<>
             $pod =~ s/[A-Z]<//g;
             $pod =~ s/>//g;
@@ -379,11 +416,19 @@ sub command {
             $pod =~ /(\w+)\s*[;\(]/   and $pod = $1;
 
             print "Adding: '$pod'\n" if debug;
-            push @{$self->{identifiers}}, $pod;
+            push @{$self->{$self->{nonwhitespace} ? "recent" : "identifiers"}}, $pod;
         }
     }
 }
 
+sub textblock {
+    my $self = shift;
+    my ($text, $line_num) = shift;
+    if ($self->{nonwhitespace} and $text =~ /\S/ and $self->{recent}) {
+        push @{$self->{identifiers}}, @{$self->{recent}};
+        $self->{recent} = [];
+    }
+}
 
 1;
 
@@ -421,8 +466,8 @@ some contributions from David Cantrell <david@cantrell.org.uk>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001, 2003, 2004 Richard Clamp, Michael Stevens. All
-rights reserved.  This program is free software; you can redistribute
-it and/or modify it under the same terms as Perl itself.
+Copyright (c) 2001, 2003, 2004, 2006 Richard Clamp, Michael
+Stevens. All rights reserved.  This program is free software; you can
+redistribute it and/or modify it under the same terms as Perl itself.
 
 =cut
