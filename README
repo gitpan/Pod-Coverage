@@ -1,4 +1,4 @@
-README for Pod::Coverage 0.18
+README for Pod::Coverage 0.19
 
 =head1 NAME
 
@@ -42,6 +42,14 @@ What changed over the last 3 revisions
 
 =over
 
+=item 0.19	Thursday 13th September, 2007
+
+	Don't use _CvGV to determine if a sub was imported, there's a handy
+	flag - GVf_IMPORTED_CV.  Fixes 5.9.5 and future perls
+	(solution by Nicholas Clark)
+
+
+
 =item 0.18    Friday 4th August, 2006
 
 	Rewrite _CvGV in terms of B::CV - no xs dependency anymore
@@ -65,14 +73,6 @@ What changed over the last 3 revisions
     	=head2 $self->foo(); was intepreted as documentation for a
         C<foo()> method.  (more XS4ALL house style)
 
-
-=item 0.16	Wednesday 20th October, 2004
-
-	Fixed a MANIFEST bug.
-	Fixed a case reported by Jos Boumans where
-    	=head2 $self->foo; was intepreted as documentation for a
-        C<foo;> method.  (XS4ALL house style)
-	
 =back
 
 =head1 SEE ALSO
@@ -89,7 +89,7 @@ some contributions from David Cantrell <david@cantrell.org.uk>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2001, 2003, 2004, 2006 Richard Clamp, Michael
+Copyright (c) 2001, 2003, 2004, 2006, 2007 Richard Clamp, Michael
 Stevens. All rights reserved.  This program is free software; you can
 redistribute it and/or modify it under the same terms as Perl itself.
 
