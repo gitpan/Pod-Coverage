@@ -1,26 +1,35 @@
 ---
 name: Pod-Coverage
-version: 0.20
-author: ~
+version: 0.21
+author:
+  - 'Richard Clamp <richardc@unixbeard.net>'
+  - 'Michael Stevens <mstevens@etla.org>'
+  - 'some contributions from David Cantrell <david@cantrell.org.uk>'
 abstract: Checks if the documentation of a module is comprehensive
 license: perl
+resources:
+  license: http://dev.perl.org/licenses/
+build_requires:
+  Test::More: 0
 requires:
   Devel::Symdump: 2.01
   Pod::Find: 0.21
   Pod::Parser: 1.13
-build_requires:
-  Test::More: 0
+configure_requires:
+  Module::Build: 0.35
 provides:
   Pod::Coverage:
     file: lib/Pod/Coverage.pm
-    version: 0.20
+    version: 0.21
   Pod::Coverage::CountParents:
     file: lib/Pod/Coverage/CountParents.pm
   Pod::Coverage::ExportOnly:
     file: lib/Pod/Coverage/ExportOnly.pm
   Pod::Coverage::Extractor:
     file: lib/Pod/Coverage.pm
-    version: 0.20
   Pod::Coverage::Overloader:
     file: lib/Pod/Coverage/Overloader.pm
-generated_by: Module::Build version 0.2611
+generated_by: Module::Build version 0.35
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4

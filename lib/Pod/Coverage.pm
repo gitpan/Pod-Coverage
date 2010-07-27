@@ -8,7 +8,7 @@ use Pod::Find qw(pod_where);
 BEGIN { defined &TRACE_ALL or eval 'sub TRACE_ALL () { 0 }' }
 
 use vars qw/ $VERSION /;
-$VERSION = '0.20';
+$VERSION = '0.21';
 
 =head1 NAME
 
@@ -78,9 +78,9 @@ qr/^import$/, qr/^DESTROY$/, qr/^AUTOLOAD$/, qr/^bootstrap$/,
              POP | PUSH | SHIFT | UNSHIFT | SPLICE | DELETE |
              EXISTS | EXTEND | CLEAR | FIRSTKEY | NEXTKEY | PRINT | PRINTF |
              WRITE | READLINE | GETC | READ | CLOSE | BINMODE | OPEN |
-             EOF | FILENO | SEEK | TELL)$/x,
+             EOF | FILENO | SEEK | TELL | SCALAR )$/x,
         qr/^( MODIFY | FETCH )_( REF | SCALAR | ARRAY | HASH | CODE |
-                                 GLOB | FORMAT | IO)_ATTRIBUTES$/x,
+                                 GLOB | FORMAT | IO )_ATTRIBUTES$/x,
         qr/^CLONE(_SKIP)?$/,
 ]
 
@@ -119,7 +119,7 @@ sub new {
              POP | PUSH | SHIFT | UNSHIFT | SPLICE | DELETE |
              EXISTS | EXTEND | CLEAR | FIRSTKEY | NEXTKEY | PRINT | PRINTF |
              WRITE | READLINE | GETC | READ | CLOSE | BINMODE | OPEN |
-             EOF | FILENO | SEEK | TELL)$/x,
+             EOF | FILENO | SEEK | TELL | SCALAR )$/x,
         qr/^( MODIFY | FETCH )_( REF | SCALAR | ARRAY | HASH | CODE |
                                  GLOB | FORMAT | IO)_ATTRIBUTES $/x,
         qr/^CLONE(_SKIP)?$/,
