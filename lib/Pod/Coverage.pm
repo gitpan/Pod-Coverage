@@ -8,7 +8,7 @@ use Pod::Find qw(pod_where);
 BEGIN { defined &TRACE_ALL or eval 'sub TRACE_ALL () { 0 }' }
 
 use vars qw/ $VERSION /;
-$VERSION = '0.21';
+$VERSION = '0.22';
 
 =head1 NAME
 
@@ -72,7 +72,7 @@ C<package> the name of the package to analyse
 
 C<private> an array of regexen which define what symbols are regarded
 as private (and so need not be documented) defaults to [ qr/^_/,
-qr/^import$/, qr/^DESTROY$/, qr/^AUTOLOAD$/, qr/^bootstrap$/,
+qr/^(un)?import$/, qr/^DESTROY$/, qr/^AUTOLOAD$/, qr/^bootstrap$/,
         qr/^(TIE( SCALAR | ARRAY | HASH | HANDLE ) |
              FETCH | STORE | UNTIE | FETCHSIZE | STORESIZE |
              POP | PUSH | SHIFT | UNSHIFT | SPLICE | DELETE |
@@ -109,7 +109,7 @@ sub new {
 
     my $private = $args{private} || [
         qr/^_/,
-        qr/^import$/,
+        qr/^(un)?import$/,
         qr/^DESTROY$/,
         qr/^AUTOLOAD$/,
         qr/^bootstrap$/,
