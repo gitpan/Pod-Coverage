@@ -8,7 +8,7 @@ use Pod::Find qw(pod_where);
 BEGIN { defined &TRACE_ALL or eval 'sub TRACE_ALL () { 0 }' }
 
 use vars qw/ $VERSION /;
-$VERSION = '0.22';
+$VERSION = '0.23';
 
 =head1 NAME
 
@@ -150,6 +150,11 @@ sub coverage {
     return unless $pods;
 
     my %symbols = map { $_ => 0 } $self->_get_syms($package);
+
+    if (!%symbols && $self->{why_unrated}) {
+        # _get_syms failed violently
+        return;
+    }
 
     print "tying shoelaces\n" if TRACE_ALL;
     for my $pod (@$pods) {
@@ -301,8 +306,11 @@ sub _get_syms {
 
     print "requiring '$package'\n" if TRACE_ALL;
     eval qq{ require $package };
-    print "require failed with $@\n" if TRACE_ALL and $@;
-    return if $@;
+    if ($@) {
+        print "require failed with $@\n" if TRACE_ALL;
+        $self->{why_unrated} = "requiring '$package' failed";
+        return;
+    }
 
     print "walking symbols\n" if TRACE_ALL;
     my $syms = Devel::Symdump->new($package);
